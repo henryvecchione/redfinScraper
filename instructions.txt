@@ -1,0 +1,15 @@
+How to use:
+
+Find folder containing this code. Select it, right click it while holding option, and choose "copy as pathname".
+
+Open Terminal
+
+run: $ cd <paste pathname>
+
+run: $ python3 scrape.py
+
+enter search parameters
+
+Chrome should start
+
+press CTRL-C to stop
