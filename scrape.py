@@ -171,7 +171,7 @@ def scrape(zipCode, sold=True, hist='5yr', startPage=1):
 
           
           data['houses'].append(houseData)
-          print(f"({ctr}) \t({numFields} fields total) \t {address}: {beds} beds, {baths} baths, {sqft} sqft, {price} ")
+          print(f"({ctr}) \t({numFields} fields) \t {address}: {beds} beds, {baths} baths, {sqft} sqft, {price} ")
           totalFields += numFields
         ctr += 1
 
