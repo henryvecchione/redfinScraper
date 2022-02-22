@@ -17,14 +17,14 @@ prefs = {"profile.managed_default_content_settings.images": 2}
 chrome_options.add_experimental_option("prefs", prefs)
 
 
-def scrape(zipCode, sold=True, hist='5yr'):
+def scrape(zipCode, sold=True, hist='5yr', startPage=1):
 
   pp = pprint.PrettyPrinter()
 
   if sold:
-    params = f'_sold_{hist}'
+    params = f'_sold_{hist}_{datetime.strftime(datetime.now(), "%d%b%y")}'
   else:
-    params = f'_sale_{datetime.now()}'
+    params = f'_sale_{datetime.strftime(datetime.now(), "%d%b%y")}'
 
   filename = f'homes_{zipCode}' + params + '.json'
   jsonFile =  open(filename, 'w')
@@ -54,8 +54,9 @@ def scrape(zipCode, sold=True, hist='5yr'):
     return
 
   # Page-by-Page loop
-  pageCounter = 1
+  pageCounter = startPage
   ctr = 1
+  totalFields = 0
   timeout = 0
   em = ''
   data = {
@@ -73,13 +74,19 @@ def scrape(zipCode, sold=True, hist='5yr'):
         break
 
       # get the links 
-      links = []
-      homes = web.find_elements(By.CLASS_NAME, 'HomeViews')
-      for h in homes:
-        bottoms = h.find_elements(By.CLASS_NAME, 'bottomV2')
-      for bottom in bottoms:
-        link = bottom.find_element(By.TAG_NAME, 'a').get_attribute('href')
-        links.append(link)
+      while True:
+        try:
+          links = []
+          homes = web.find_elements(By.CLASS_NAME, 'HomeViews')
+          for h in homes:
+            bottoms = h.find_elements(By.CLASS_NAME, 'bottomV2')
+          for bottom in bottoms:
+            link = bottom.find_element(By.TAG_NAME, 'a').get_attribute('href')
+            links.append(link)
+
+          break
+        except:
+          continue
 
       # home-by-home loop
       for link in links:
@@ -139,6 +146,9 @@ def scrape(zipCode, sold=True, hist='5yr'):
             houseData['date_m'] = 'cfs'
             houseData['date_y'] = 'cfs'
 
+          houseData['url'] = link
+
+          numFields = len(houseData)
           # from the amenities table
           amenitiesContainer = web.find_element(By.CLASS_NAME, 'amenities-container')
           sgTitles = [sgt.get_attribute('textContent') for sgt in amenitiesContainer.find_elements(By.CLASS_NAME, 'super-group-title')]
@@ -157,10 +167,12 @@ def scrape(zipCode, sold=True, hist='5yr'):
                 k = kv[0]
                 v = ''.join(kv[1:])[1:]
                 houseData[t][subtitle][k] = v.replace('_', ' ')
+                numFields += 1
 
           
           data['houses'].append(houseData)
-          print(f"({ctr}) \t {address}: {beds} beds, {baths} baths, {sqft} sqft, {price}")
+          print(f"({ctr}) \t({numFields} fields total) \t {address}: {beds} beds, {baths} baths, {sqft} sqft, {price} ")
+          totalFields += numFields
         ctr += 1
 
   
@@ -168,13 +180,13 @@ def scrape(zipCode, sold=True, hist='5yr'):
     except KeyboardInterrupt:
       json.dump(data, jsonFile, indent=4)
       jsonFile.close()
-      print(f"Interrupted. Wrote {ctr} data points to {filename}")
+      print(f"Interrupted. Data on {ctr} houses written to {filename} ({totalFields} data points total)")
       return
 
 
   json.dump(data, jsonFile, indent=4)
   jsonFile.close()
-  print(f'\nFinished. {ctr} data points written to {filename}')
+  print(f'\nFinished. Data on {ctr} houses written to {filename} ({totalFields} data points total)')
 
 
 
@@ -241,16 +253,18 @@ if __name__ == "__main__":
 
       hist = histStrs[h]
 
+      startPage = int(input("Enter a page number to start on: (1 for the beginning)\n>>> "))
+
     if sold:
       out = f"sold in the last {hist}s"
     else:
       out = f"currently for sale"
 
-    print(f'OK. Scraping houses in {zipCode} ' + out + '...')
+    print(f'OK. Scraping houses in {zipCode} ' + out + f', at page {startPage}...')
     if sold:
-      scrape(zipCode, sold=sold, hist=hist)
+      scrape(zipCode, sold=sold, hist=hist, startPage=startPage)
     else:
-      scrape(zipCode, sold=sold)
+      scrape(zipCode, sold=sold, startPage=startPage)
 
 
         
