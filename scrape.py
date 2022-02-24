@@ -60,8 +60,17 @@ def scrape(zipCode, sold=True, hist='5yr', startPage=1):
   timeout = 0
   em = ''
   data = {
+    'meta' : {
+      'zip_code' : str(zipCode),
+      'sold' : sold,
+      'start_page' : startPage,
+      'retrieved' : datetime.strftime(datetime.now(), "%d%b%y"),
+    },
     'houses' : []
   }
+  if sold:
+    data['meta']['timeframe'] = hist
+
   while True:
     try:
       # get the next page
@@ -130,7 +139,8 @@ def scrape(zipCode, sold=True, hist='5yr', startPage=1):
             success = True
             break
           except NoSuchElementException as e:
-            print(f'({ctr})\t(NoSuchElementException) Data not found')
+            print(f'(XX)\t(NoSuchElementException) Data not found')
+            ctr -= 1
             success = False
             break
           except Exception as e:
@@ -195,7 +205,7 @@ def scrape(zipCode, sold=True, hist='5yr', startPage=1):
     except KeyboardInterrupt:
       json.dump(data, jsonFile, indent=4)
       jsonFile.close()
-      print(f"Interrupted. Data on {ctr} houses written to {filename} ({totalFields} data points total)")
+      print(f"\nInterrupted. Data on {ctr} houses written to {filename} ({totalFields} data points total)")
       return
 
 
@@ -268,7 +278,7 @@ if __name__ == "__main__":
 
       hist = histStrs[h]
 
-      startPage = int(input("Enter a page number to start on: (1 for the beginning)\n>>> "))
+    startPage = int(input("Enter a page number to start on: (1 for the beginning)\n>>> "))
 
     if sold:
       out = f"sold in the last {hist}s"
