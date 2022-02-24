@@ -95,6 +95,7 @@ def scrape(zipCode, sold=True, hist='5yr', startPage=1):
 
         # scrape that data baby
         # basics
+        kd = {}
         while True:
           try:
             if timeout == 200:
@@ -112,6 +113,17 @@ def scrape(zipCode, sold=True, hist='5yr', startPage=1):
               soldDate = datetime.strptime(lastSold, '%b %d, %Y') # Mon dd, YYYY
             else:
               soldDate = 'nd'
+
+
+            
+            kdList = web.find_elements(By.CLASS_NAME, "keyDetailsList")
+            for l in kdList:
+              keydetails = l.find_elements(By.CSS_SELECTOR, ".keyDetail.font-weight-roman.font-size-base" )
+              for deet in keydetails:
+                key = deet.find_element(By.CSS_SELECTOR, ".header.font-color-gray-light.inline-block").get_attribute("textContent").replace(' ', '_')
+                val = deet.find_element(By.CSS_SELECTOR, ".content.text-right").get_attribute("textContent")
+                kd[key] = val
+
 
             timeout = 0
             em = 'unknown error'
@@ -147,6 +159,9 @@ def scrape(zipCode, sold=True, hist='5yr', startPage=1):
             houseData['date_y'] = 'cfs'
 
           houseData['url'] = link
+          
+          for k in kd:
+            houseData[k] = kd[k]
 
           numFields = len(houseData)
           # from the amenities table
